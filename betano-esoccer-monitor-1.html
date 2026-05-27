@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ eSoccer Monitor Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#050810;--bg2:#090d1a;--bg3:#0d1225;--panel:#0f1629;
+  --border:#1a2545;--glow-border:#2a3f7a;
+  --green:#00ff88;--yellow:#ffd200;--red:#ff3b5c;--blue:#3d8bff;--cyan:#00e5ff;--purple:#9b5de5;
+  --text:#c8d4f0;--text2:#6b7fa8;--text3:#3a4a6b;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,136,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* HEADER */
+header{position:relative;z-index:10;padding:14px 20px;border-bottom:1px solid var(--border);background:rgba(9,13,26,.97);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--blue));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 16px rgba(0,255,136,.4);}
+.logo h1{font-family:'Orbitron',monospace;font-size:15px;font-weight:900;color:#fff;letter-spacing:2px;}
+.logo span{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green);letter-spacing:2px;display:block;}
+.hright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.status-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;border:1px solid;letter-spacing:1px;}
+.status-pill.offline{color:var(--red);border-color:var(--red);background:rgba(255,59,92,.08);}
+.status-pill.online{color:var(--green);border-color:var(--green);background:rgba(0,255,136,.08);}
+.status-pill.scanning{color:var(--yellow);border-color:var(--yellow);background:rgba(255,210,0,.08);}
+.pdot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pdot 1.4s ease-in-out infinite;}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.3;transform:scale(.6);}}
+
+/* BUTTONS */
+.btn{padding:7px 16px;border-radius:6px;border:none;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;text-transform:uppercase;display:inline-flex;align-items:center;gap:6px;}
+.btn-green{background:var(--green);color:#000;box-shadow:0 0 12px rgba(0,255,136,.3);}
+.btn-green:hover{box-shadow:0 0 22px rgba(0,255,136,.5);transform:translateY(-1px);}
+.btn-green:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.btn-red{background:transparent;color:var(--red);border:1px solid var(--red);}
+.btn-red:hover{background:rgba(255,59,92,.1);}
+.btn-out{background:transparent;color:var(--blue);border:1px solid var(--blue);font-size:12px;padding:6px 12px;}
+.btn-out:hover{background:rgba(61,139,255,.1);}
+.btn-out.yellow{color:var(--yellow);border-color:var(--yellow);}
+.btn-out.yellow:hover{background:rgba(255,210,0,.08);}
+
+/* CONFIG BAR */
+.cfg{position:relative;z-index:10;padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.cfg-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);letter-spacing:1px;white-space:nowrap;}
+.cfg-input{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 10px;outline:none;transition:border-color .2s;}
+.cfg-input:focus{border-color:var(--green);}
+.cfg-input.w200{width:200px;}
+.cfg-input.w90{width:90px;}
+
+/* MAIN GRID */
+main{position:relative;z-index:5;display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 115px);}
+
+/* SIDEBAR */
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.sb-sect{padding:14px 16px;border-bottom:1px solid var(--border);}
+.sect-title{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;color:var(--text2);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.sect-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.stat{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;position:relative;overflow:hidden;}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--green));}
+.stat.y{--c:var(--yellow)}.stat.b{--c:var(--blue)}.stat.r{--c:var(--red)}
+.stat-n{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:var(--c,var(--green));line-height:1;}
+.stat-l{font-size:10px;color:var(--text2);margin-top:3px;}
+.prog-wrap{width:100%;height:2px;background:var(--border);border-radius:1px;overflow:hidden;margin-top:10px;}
+.prog{height:100%;background:var(--green);border-radius:1px;transition:width 1s linear;box-shadow:0 0 6px var(--green);}
+
+/* PLAYERS */
+.players-scroll{flex:1;overflow-y:auto;padding:14px 16px;}
+.players-scroll::-webkit-scrollbar{width:3px;}
+.players-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.ptag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;margin:2px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;user-select:none;border:1px solid;}
+.ptag.on{background:rgba(0,255,136,.12);border-color:rgba(0,255,136,.5);color:var(--green);}
+.ptag.on.star{background:rgba(255,210,0,.15);border-color:rgba(255,210,0,.6);color:var(--yellow);}
+.ptag.off{background:var(--bg3);border-color:var(--border);color:var(--text2);}
+.ptag:hover{transform:scale(1.06);}
+.padd{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.padd input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 8px;outline:none;}
+.padd input:focus{border-color:var(--green);}
+
+/* CONTENT */
+.content{display:flex;flex-direction:column;overflow:hidden;}
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg2);padding:0 16px;}
+.tab{padding:12px 16px;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:6px;}
+.tab:hover{color:var(--text);}
+.tab.on{color:var(--green);border-bottom-color:var(--green);}
+.tbadge{background:var(--red);color:#fff;border-radius:8px;font-size:9px;padding:1px 5px;font-family:'JetBrains Mono',monospace;animation:tbadge 2s ease-in-out infinite;}
+@keyframes tbadge{0%,100%{opacity:1;}50%{opacity:.5;}}
+.tab-body{flex:1;overflow-y:auto;padding:16px;display:none;}
+.tab-body.on{display:block;}
+.tab-body::-webkit-scrollbar{width:4px;}
+.tab-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ALERT CARDS */
+.acard{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:8px;padding:12px 14px;margin-bottom:10px;animation:ain .35s ease;position:relative;overflow:hidden;}
+.acard::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,255,136,.03),transparent 60%);pointer-events:none;}
+.acard.top{border-left-color:var(--yellow);}
+.acard.top::before{background:linear-gradient(90deg,rgba(255,210,0,.05),transparent 60%);}
+.acard:hover{border-color:var(--glow-border);}
+@keyframes ain{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+.acard-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.acard-match{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#fff;line-height:1.3;}
+.acard-time{font-family:'Orbitron',monospace;font-size:18px;font-weight:700;color:var(--cyan);white-space:nowrap;}
+.acard-meta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.ameta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);}
+.ameta b{color:var(--text);}
+.chip{display:inline-flex;align-items:center;padding:2px 7px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;}
+.chip.g{background:rgba(0,255,136,.12);color:var(--green);border:1px solid rgba(0,255,136,.3);}
+.chip.y{background:rgba(255,210,0,.12);color:var(--yellow);border:1px solid rgba(255,210,0,.35);}
+.chip.b{background:rgba(61,139,255,.12);color:var(--blue);border:1px solid rgba(61,139,255,.3);}
+
+/* LINK BUTTON */
+.alink{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;background:rgba(61,139,255,.1);border:1px solid rgba(61,139,255,.3);color:var(--blue);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;text-decoration:none;transition:all .2s;margin-top:8px;}
+.alink:hover{background:rgba(61,139,255,.2);border-color:var(--blue);}
+
+/* WINNER BOX */
+.winner-box{margin-top:8px;padding:8px 10px;border-radius:6px;background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.25);display:flex;align-items:center;gap:8px;}
+.winner-box.y{background:rgba(255,210,0,.07);border-color:rgba(255,210,0,.25);}
+.winner-label{font-family:'Orbitron',monospace;font-size:9px;color:var(--text2);letter-spacing:2px;}
+.winner-name{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--green);}
+.winner-name.y{color:var(--yellow);}
+.winner-pct{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);margin-left:auto;}
+
+/* EMPTY */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;color:var(--text3);text-align:center;gap:10px;}
+.empty-icon{font-size:44px;opacity:.25;}
+.empty-t{font-family:'Orbitron',monospace;font-size:12px;letter-spacing:2px;}
+.empty-s{font-size:12px;max-width:280px;}
+
+/* SALAS TABLE */
+.stbl{width:100%;border-collapse:collapse;}
+.stbl th{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:var(--text2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);text-transform:uppercase;}
+.stbl td{padding:9px 12px;border-bottom:1px solid rgba(26,37,69,.4);font-size:12px;vertical-align:middle;}
+.stbl tr:hover td{background:rgba(61,139,255,.03);}
+.sid{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue);font-weight:700;}
+.sdot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+.sdot.g{background:var(--green);box-shadow:0 0 5px var(--green);}
+.sdot.r{background:var(--red);}
+.sdot.y{background:var(--yellow);animation:pdot 1s infinite;}
+.sdot.x{background:var(--text3);}
+.slink{color:var(--blue);font-size:10px;text-decoration:none;font-family:'JetBrains Mono',monospace;}
+.slink:hover{color:var(--cyan);}
+
+/* AI CHAT */
+.ai-wrap{display:flex;flex-direction:column;height:100%;}
+.ai-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+.ai-msgs::-webkit-scrollbar{width:3px;}
+.ai-msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.msg{display:flex;gap:8px;animation:ain .3s ease;}
+.msg.u{flex-direction:row-reverse;}
+.mav{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.msg.a .mav{background:linear-gradient(135deg,var(--green),var(--blue));}
+.msg.u .mav{background:var(--bg3);border:1px solid var(--border);}
+.mbub{max-width:82%;padding:10px 12px;border-radius:9px;font-size:13px;line-height:1.6;}
+.msg.a .mbub{background:var(--panel);border:1px solid var(--border);border-bottom-left-radius:2px;}
+.msg.u .mbub{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.25);border-bottom-right-radius:2px;}
+.mbub b{color:var(--green);}
+.typing{display:flex;align-items:center;gap:4px;padding:10px 12px;background:var(--panel);border:1px solid var(--border);border-radius:9px;border-bottom-left-radius:2px;width:fit-content;}
+.tdot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:typing 1.2s ease-in-out infinite;}
+.tdot:nth-child(2){animation-delay:.2s;}.tdot:nth-child(3){animation-delay:.4s;}
+@keyframes typing{0%,60%,100%{transform:translateY(0);opacity:.5;}30%{transform:translateY(-5px);opacity:1;}}
+.ai-bottom{margin-top:12px;display:flex;gap:8px;}
+.ai-input{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;padding:9px 12px;outline:none;resize:none;transition:border-color .2s;}
+.ai-input:focus{border-color:var(--green);}
+.qactions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.qbtn{padding:5px 10px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:11px;font-family:'Rajdhani',sans-serif;font-weight:600;cursor:pointer;transition:all .2s;}
+.qbtn:hover{border-color:var(--green);color:var(--green);background:rgba(0,255,136,.05);}
+
+/* LOG */
+.log-area{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.9;height:100%;overflow-y:auto;}
+.log-area::-webkit-scrollbar{width:3px;}
+.log-area::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.ll{color:var(--text2);}.ll.i{color:var(--text);}.ll.s{color:var(--green);}.ll.w{color:var(--yellow);}.ll.e{color:var(--red);}.ll.ai{color:var(--purple);}
+.lt{color:var(--text3);}
+
+/* COUNTDOWN */
+.cdwn{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2);display:flex;align-items:center;gap:4px;}
+.cdwn .s{color:var(--cyan);font-weight:700;}
+
+/* TOAST */
+#toasts{position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{background:var(--panel);border:1px solid var(--green);border-left:4px solid var(--green);border-radius:8px;padding:10px 14px;max-width:300px;animation:toastin .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.5),0 0 15px rgba(0,255,136,.2);pointer-events:auto;}
+.toast.w{border-color:var(--yellow);box-shadow:0 4px 20px rgba(0,0,0,.5),0 0 15px rgba(255,210,0,.2);}
+.toast.e{border-color:var(--red);box-shadow:0 4px 20px rgba(0,0,0,.5),0 0 15px rgba(255,59,92,.2);}
+.toast-t{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;color:var(--green);margin-bottom:3px;letter-spacing:1px;text-transform:uppercase;}
+.toast.w .toast-t{color:var(--yellow);}.toast.e .toast-t{color:var(--red);}
+.toast-b{font-size:11px;color:var(--text);line-height:1.4;}
+@keyframes toastin{from{opacity:0;transform:translateX(16px);}to{opacity:1;transform:translateX(0);}}
+
+@media(max-width:800px){main{grid-template-columns:1fr;}.sidebar{max-height:280px;border-right:none;border-bottom:1px solid var(--border);}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚽</div>
+    <div>
+      <h1>eSoccer Monitor Pro</h1>
+      <span>BETANO · ALERTAS INTELIGENTES</span>
+    </div>
+  </div>
+  <div class="hright">
+    <div class="cdwn">Próx scan: <span class="s" id="cdwn">--</span>s</div>
+    <div class="status-pill offline" id="status-pill"><div class="pdot"></div><span id="status-txt">OFFLINE</span></div>
+    <button class="btn btn-green" id="btn-start" onclick="startMonitor()">▶ INICIAR</button>
+    <button class="btn btn-red" id="btn-stop" onclick="stopMonitor()" style="display:none">■ PARAR</button>
+  </div>
+</header>
+
+<div class="cfg">
+  <span class="cfg-label">TOKEN</span>
+  <input class="cfg-input w200" id="tg-token" type="password" placeholder="Bot token Telegram">
+  <span class="cfg-label">CHAT ID</span>
+  <input class="cfg-input w90" id="tg-chatid" type="text" placeholder="Chat ID">
+  <span class="cfg-label">INTERVALO</span>
+  <input class="cfg-input w90" id="interval" type="number" value="30" min="10" max="300">
+  <span class="cfg-label">seg</span>
+  <button class="btn btn-out" onclick="saveConfig()">💾 Salvar</button>
+  <button class="btn btn-out yellow" onclick="testTelegram()">📨 Testar Telegram</button>
+  <button class="btn btn-out" onclick="exportCSV()">📥 CSV</button>
+  <button class="btn btn-out" onclick="clearAlerts()" style="color:var(--red);border-color:var(--red);">🗑 Limpar</button>
+</div>
+
+<main>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-sect">
+      <div class="sect-title">Estatísticas</div>
+      <div class="stats">
+        <div class="stat"><div class="stat-n" id="st-alertas">0</div><div class="stat-l">Alertas</div></div>
+        <div class="stat y"><div class="stat-n" id="st-top">0</div><div class="stat-l">⭐ Top</div></div>
+        <div class="stat b"><div class="stat-n" id="st-scans">0</div><div class="stat-l">Scans</div></div>
+        <div class="stat r"><div class="stat-n" id="st-erros">0</div><div class="stat-l">Erros</div></div>
+      </div>
+      <div class="prog-wrap"><div class="prog" id="prog" style="width:0%"></div></div>
+    </div>
+    <div class="sb-sect">
+      <div class="sect-title">Top Players <span style="color:var(--green);font-size:9px;margin-left:4px;">● ativo</span></div>
+    </div>
+    <div class="players-scroll" id="players-wrap"></div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="tabs">
+      <div class="tab on" onclick="switchTab('alertas')">⚡ Alertas <span class="tbadge" id="badge" style="display:none">0</span></div>
+      <div class="tab" onclick="switchTab('salas')">📡 Salas</div>
+      <div class="tab" onclick="switchTab('ia')">🤖 IA</div>
+      <div class="tab" onclick="switchTab('log')">📋 Log</div>
+    </div>
+
+    <!-- ALERTAS -->
+    <div class="tab-body on" id="tab-alertas">
+      <div id="alerts-wrap">
+        <div class="empty"><div class="empty-icon">📡</div><div class="empty-t">Aguardando</div><div class="empty-s">Configure o Telegram, ative os jogadores e clique em INICIAR</div></div>
+      </div>
+    </div>
+
+    <!-- SALAS -->
+    <div class="tab-body" id="tab-salas">
+      <table class="stbl">
+        <thead><tr><th>Sala</th><th>Nome</th><th>Status</th><th>Último Scan</th><th>Alertas</th><th>Link</th></tr></thead>
+        <tbody id="salas-body"></tbody>
+      </table>
+    </div>
+
+    <!-- IA -->
+    <div class="tab-body" id="tab-ia">
+      <div class="ai-wrap">
+        <div class="qactions">
+          <button class="qbtn" onclick="qa('Quais jogadores estão em mais alertas hoje?')">🏆 Ranking jogadores</button>
+          <button class="qbtn" onclick="qa('Qual o melhor horário para apostar agora?')">⏰ Melhor horário</button>
+          <button class="qbtn" onclick="qa('Analise os alertas e me diga qual jogo apostar')">🎯 Melhor jogo</button>
+          <button class="qbtn" onclick="qa('Quais salas têm mais oportunidades?')">📡 Melhores salas</button>
+        </div>
+        <div class="ai-msgs" id="ai-msgs">
+          <div class="msg a"><div class="mav">🤖</div><div class="mbub">Olá! Sou o <b>Analista IA</b> do Monitor. Analiso os alertas em tempo real e recomendo os melhores jogos para apostar. Use os atalhos ou me pergunte diretamente!</div></div>
+        </div>
+        <div class="ai-bottom">
+          <textarea class="ai-input" id="ai-inp" rows="2" placeholder="Pergunte sobre jogadores, horários, padrões..." onkeydown="aiKey(event)"></textarea>
+          <button class="btn btn-green" onclick="sendAI()" id="ai-btn">ENVIAR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG -->
+    <div class="tab-body" id="tab-log">
+      <div class="log-area" id="log-area">
+        <div class="ll i">[SISTEMA] Monitor eSoccer Pro iniciado.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toasts"></div>
+
+<script>
+// ════════════════════════════════════════════
+// DADOS
+// ════════════════════════════════════════════
+
+const SALAS = [
+  {id:"201804",nome:"Battle — 8 min"},
+  {id:"194427",nome:"Battle — 6 min"},
+  {id:"201806",nome:"Champions — 8 min"},
+  {id:"194781",nome:"Champions — 6 min"},
+  {id:"194428",nome:"GT Leagues — 12 min"},
+  {id:"194429",nome:"Premier — 8 min"},
+  {id:"194463",nome:"eAdriatic — 10 min"},
+  {id:"194951",nome:"H2H GG — 8 min"},
+  {id:"201034",nome:"Arena — 6 min"},
+  {id:"201033",nome:"Arena — 8 min"},
+  {id:"204604",nome:"La Liga — 10 min"},
+  {id:"195867",nome:"Serie A — 10 min"},
+];
+
+const BASE_URL = "https://www.betano.bet.br/sport/futebol/competicoes/esoccer/189438/?sl=";
+
+// Jogadores com ranking de força (1-10)
+const PLAYERS_DB = {
+  "Kray":10,"MeLToSiK":10,"Plevis":9,"Inquisitor":9,"Buiko":9,
+  "Jekos":9,"Boduya":8,"Nikkitta":8,"Boulevard":8,"LowGrounded":8,
+  "Wboy":8,"Ganger_M":8,"Sg_kraish":8,"Danylov":8,"Flewless_phoenix":7,
+  "Panther":7,"Alexis":7,"Matrix":7,"Joshua":7,"Eduardo":7,
+  "Flash":7,"Andrew":7,"Noah":7,"MERLIN":9,"BULLFROG":8,
+  "LAVA":8,"MJ":8,"RADICAL":7,"BOOM":7,"CHASER":7,
+  "Amado":9,"Doctor":9,"Eros":8,"Goat":9,"Rossi":8,"Stan":7,
+  // eAdriatic
+  "Sasa":9,"Kg_pure":9,"Vojo":9,"Iron":7,"Misterx":8,
+  "Dexter":8,"Demolishor":8,"SpeciAL":9,"DangerDim77":8,
+  "Grellz":8,"Volvo":8,"Nightxx":8
+};
+
+let state = {
+  running:false, interval:30, countdown:30,
+  scans:0, errors:0, alertCount:0, topCount:0,
+  alerts:[], seen:new Set(),
+  players: Object.keys(PLAYERS_DB),
+  active: new Set(Object.keys(PLAYERS_DB)),
+  salaStatus:{}, salaAlerts:{}, salaLastScan:{},
+  countInterval:null,
+};
+
+SALAS.forEach(s=>{state.salaStatus[s.id]='idle';state.salaAlerts[s.id]=0;state.salaLastScan[s.id]='--';});
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+
+function init(){
+  loadConfig();
+  renderPlayers();
+  renderSalas();
+}
+
+function loadConfig(){
+  try{
+    const c=JSON.parse(localStorage.getItem('esoccer_cfg')||'{}');
+    if(c.token) document.getElementById('tg-token').value=c.token;
+    if(c.chatid) document.getElementById('tg-chatid').value=c.chatid;
+    if(c.interval){document.getElementById('interval').value=c.interval;state.interval=+c.interval;state.countdown=+c.interval;}
+    if(c.active) state.active=new Set(c.active);
+  }catch(e){}
+}
+
+function saveConfig(){
+  const c={
+    token:document.getElementById('tg-token').value,
+    chatid:document.getElementById('tg-chatid').value,
+    interval:+document.getElementById('interval').value,
+    active:[...state.active],
+  };
+  localStorage.setItem('esoccer_cfg',JSON.stringify(c));
+  state.interval=c.interval;
+  toast('Salvo!','Configurações salvas.','');
+  log('Configurações salvas.','s');
+}
+
+// ════════════════════════════════════════════
+// MONITOR
+// ════════════════════════════════════════════
+
+function startMonitor(){
+  state.running=true;
+  state.interval=+document.getElementById('interval').value||30;
+  state.countdown=state.interval;
+  document.getElementById('btn-start').style.display='none';
+  document.getElementById('btn-stop').style.display='';
+  setStatus('scanning','ESCANEANDO');
+  log('Monitor iniciado.','s');
+  toast('Monitor Iniciado!','Escaneando '+SALAS.length+' salas.','');
+  sendTG('🟢 Monitor eSoccer Pro iniciado!\nMonitorando '+SALAS.length+' salas.');
+  runCycle();
+  state.countInterval=setInterval(()=>{
+    if(!state.running)return;
+    state.countdown--;
+    if(state.countdown<=0){state.countdown=state.interval;runCycle();}
+    renderCountdown();
+  },1000);
+}
+
+function stopMonitor(){
+  state.running=false;
+  clearInterval(state.countInterval);
+  document.getElementById('btn-start').style.display='';
+  document.getElementById('btn-stop').style.display='none';
+  setStatus('offline','OFFLINE');
+  log('Monitor parado.','w');
+  toast('Monitor Parado','','w');
+}
+
+async function runCycle(){
+  setStatus('scanning','ESCANEANDO');
+  state.scans++;
+  updateStats();
+  log('Scan #'+state.scans+' iniciado — '+SALAS.length+' salas','i');
+
+  for(const sala of SALAS){
+    state.salaStatus[sala.id]='scanning';
+    renderSalas();
+    await delay(200+Math.random()*300);
+    try{
+      const matches=await simulateScan(sala);
+      state.salaStatus[sala.id]='ok';
+      state.salaLastScan[sala.id]=now();
+      if(matches.length) processMatches(matches,sala);
+    }catch(e){
+      state.errors++;
+      state.salaStatus[sala.id]='error';
+      log('ERRO sala '+sala.id+': '+e.message,'e');
+    }
+    renderSalas();
+    updateStats();
+  }
+  setStatus('online','ONLINE');
+  log('Scan #'+state.scans+' concluído. '+state.alertCount+' alertas totais.','s');
+}
+
+// ════════════════════════════════════════════
+// SIMULAÇÃO (substitua por scraping real)
+// Em produção: use script Python com Playwright
+// ════════════════════════════════════════════
+
+async function simulateScan(sala){
+  if(Math.random()>0.22) return [];
+  const active=[...state.active];
+  if(!active.length) return [];
+
+  // Escolhe 2 jogadores ativos
+  const p1=active[Math.floor(Math.random()*active.length)];
+  const p2=active[Math.floor(Math.random()*active.length)];
+  const r1=PLAYERS_DB[p1]||5;
+  const r2=PLAYERS_DB[p2]||5;
+
+  // Determine vencedor provável pelo ranking
+  const totalR=r1+r2;
+  const pct1=Math.round((r1/totalR)*100);
+  const winner=r1>=r2?p1:p2;
+  const winnerPct=r1>=r2?pct1:100-pct1;
+  const isTop=(r1>=9||r2>=9);
+
+  const teams=["FC Dragon","Blue Stars","Red Force","Alpha","Omega","Storm","Blaze","Nova","Titan","Fenix"];
+  const t1=teams[Math.floor(Math.random()*teams.length)];
+  const t2=teams[Math.floor(Math.random()*teams.length)];
+
+  const h=new Date();
+  h.setMinutes(h.getMinutes()+Math.floor(Math.random()*18)+2);
+  const horario=String(h.getHours()).padStart(2,'0')+':'+String(h.getMinutes()).padStart(2,'0');
+
+  return [{
+    partida:`${t1} (${p1}) x ${t2} (${p2})`,
+    p1,p2,t1,t2,r1,r2,
+    winner,winnerPct,isTop,
+    horario,
+    sala:sala.id,
+    salaNome:sala.nome,
+    url:BASE_URL+sala.id,
+  }];
+}
+
+function processMatches(matches,sala){
+  for(const m of matches){
+    const key=`${m.sala}|${m.partida}|${m.horario}`;
+    if(state.seen.has(key)) continue;
+    state.seen.add(key);
+    state.alerts.unshift({...m,timestamp:now(),key});
+    state.alertCount++;
+    if(m.isTop) state.topCount++;
+    state.salaAlerts[sala.id]=(state.salaAlerts[sala.id]||0)+1;
+
+    log('ALERTA: '+m.partida+' | '+m.horario+' | Sala '+m.sala+' | Apostar: '+m.winner,'s');
+    toast('⚽ '+m.salaNome,m.partida+'\n'+m.horario,'');
+
+    // Monta mensagem Telegram rica
+    const stars=m.isTop?'⭐':'✅';
+    const msg=
+      stars+' ALERTA eSoccer Betano\n\n'+
+      '🏟 '+m.partida+'\n'+
+      '🕐 Horário: '+m.horario+'\n'+
+      '🎮 Jogadores: '+m.p1+' ('+m.r1+'/10) vs '+m.p2+' ('+m.r2+'/10)\n'+
+      '🟢 APOSTAR EM: '+m.winner+' ('+m.winnerPct+'% força)\n'+
+      '🏠 Sala: '+m.salaNome+'\n'+
+      '🔗 '+m.url+'\n'+
+      '📅 '+m.timestamp;
+    sendTG(msg);
+
+    renderAlerts();
+    updateStats();
+  }
+}
+
+// ════════════════════════════════════════════
+// TELEGRAM — form POST via iframe (sem CORS)
+// ════════════════════════════════════════════
+
+function sendTG(message){
+  const token=document.getElementById('tg-token').value.trim();
+  const chatId=document.getElementById('tg-chatid').value.trim();
+  if(!token||!chatId||token.length<20) return;
+  try{
+    const old=document.getElementById('tg-frame');
+    if(old) old.remove();
+    const iframe=document.createElement('iframe');
+    iframe.id='tg-frame';iframe.name='tg-frame';
+    iframe.style.cssText='display:none;width:0;height:0;border:0;position:absolute;top:-99px;left:-99px;';
+    document.body.appendChild(iframe);
+    const form=document.createElement('form');
+    form.method='POST';
+    form.action='https://api.telegram.org/bot'+token+'/sendMessage';
+    form.target='tg-frame';
+    form.style.display='none';
+    [{k:'chat_id',v:chatId},{k:'text',v:message}].forEach(({k,v})=>{
+      const i=document.createElement('input');
+      i.type='hidden';i.name=k;i.value=v;
+      form.appendChild(i);
+    });
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(()=>form.remove(),3000);
+    log('Telegram ✓ disparado','s');
+  }catch(e){log('Telegram ERRO: '+e.message,'e');}
+}
+
+function testTelegram(){
+  const token=document.getElementById('tg-token').value.trim();
+  const chatId=document.getElementById('tg-chatid').value.trim();
+  if(!token||token.length<20){toast('Token inválido','Cole o token do bot.','w');return;}
+  if(!chatId){toast('Chat ID vazio','Cole seu Chat ID.','w');return;}
+  const msg='✅ Teste Monitor eSoccer Pro\n\nConexão funcionando!\nHorário: '+now()+'\nSalas: '+SALAS.length+'\nJogadores ativos: '+state.active.size;
+  sendTG(msg);
+  toast('Teste enviado!','Verifique seu Telegram.','');
+}
+
+// ════════════════════════════════════════════
+// RENDER — ALERTS
+// ════════════════════════════════════════════
+
+function renderAlerts(){
+  const wrap=document.getElementById('alerts-wrap');
+  const badge=document.getElementById('badge');
+  if(!state.alerts.length){
+    wrap.innerHTML='<div class="empty"><div class="empty-icon">📡</div><div class="empty-t">Nenhum alerta ainda</div><div class="empty-s">Aguardando partidas com Top Players...</div></div>';
+    badge.style.display='none';return;
+  }
+  badge.style.display='';
+  badge.textContent=state.alerts.length;
+
+  wrap.innerHTML=state.alerts.map(a=>{
+    const wIsP1=a.winner===a.p1;
+    const chipW=`<span class="chip y">⭐ APOSTAR: ${a.winner} ${a.winnerPct}%</span>`;
+    const chipP1=wIsP1
+      ?`<span class="chip y">★ ${a.p1} (${a.r1}/10)</span>`
+      :`<span class="chip g">${a.p1} (${a.r1}/10)</span>`;
+    const chipP2=!wIsP1
+      ?`<span class="chip y">★ ${a.p2} (${a.r2}/10)</span>`
+      :`<span class="chip g">${a.p2} (${a.r2}/10)</span>`;
+    return `
+    <div class="acard ${a.isTop?'top':''}">
+      <div class="acard-header">
+        <div class="acard-match">${a.t1} x ${a.t2}</div>
+        <div class="acard-time">${a.horario}</div>
+      </div>
+      <div class="acard-meta">
+        ${chipP1} ${chipP2}
+      </div>
+      <div class="winner-box ${a.isTop?'y':''}">
+        <div>
+          <div class="winner-label">🟢 JOGAR COM</div>
+          <div class="winner-name ${a.isTop?'y':''}">${a.winner}</div>
+        </div>
+        <div class="winner-pct">${a.winnerPct}% força</div>
+      </div>
+      <div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span class="ameta">🏠 <b>${a.salaNome}</b></span>
+        <span class="ameta">📅 <b>${a.timestamp}</b></span>
+        <a class="alink" href="${a.url}" target="_blank">🔗 Abrir sala na Betano →</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// RENDER — PLAYERS
+// ════════════════════════════════════════════
+
+function renderPlayers(){
+  const wrap=document.getElementById('players-wrap');
+  // Ordena por ranking
+  const sorted=[...state.players].sort((a,b)=>(PLAYERS_DB[b]||0)-(PLAYERS_DB[a]||0));
+  const tags=sorted.map(p=>{
+    const on=state.active.has(p);
+    const r=PLAYERS_DB[p]||5;
+    const star=r>=9;
+    return `<span class="ptag ${on?(star?'on star':'on'):'off'}" onclick="toggleP('${p}')">${star&&on?'⭐':on?'●':'○'} ${p}<span style="opacity:.5;font-size:9px;margin-left:3px;">${r}</span></span>`;
+  }).join('');
+  wrap.innerHTML=tags+`
+    <div class="padd">
+      <input type="text" id="np-inp" placeholder="+ Novo nick..." onkeydown="if(event.key==='Enter')addP()">
+      <button class="btn btn-green" onclick="addP()" style="padding:5px 10px;font-size:11px;">ADD</button>
+    </div>`;
+}
+
+function toggleP(name){
+  state.active.has(name)?state.active.delete(name):state.active.add(name);
+  renderPlayers();
+}
+
+function addP(){
+  const inp=document.getElementById('np-inp');
+  const n=inp.value.trim();
+  if(!n) return;
+  if(state.players.includes(n)){toast('Já existe','','w');return;}
+  state.players.push(n);
+  PLAYERS_DB[n]=7;
+  state.active.add(n);
+  inp.value='';
+  renderPlayers();
+  log('Jogador adicionado: '+n,'i');
+}
+
+// ════════════════════════════════════════════
+// RENDER — SALAS
+// ════════════════════════════════════════════
+
+function renderSalas(){
+  const body=document.getElementById('salas-body');
+  body.innerHTML=SALAS.map(s=>{
+    const st=state.salaStatus[s.id]||'idle';
+    const dc=st==='ok'?'g':st==='error'?'r':st==='scanning'?'y':'x';
+    const sl=st==='ok'?'OK':st==='error'?'ERRO':st==='scanning'?'SCAN...':'IDLE';
+    return `<tr>
+      <td><span class="sid">${s.id}</span></td>
+      <td>${s.nome}</td>
+      <td><span class="sdot ${dc}"></span> ${sl}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text2)">${state.salaLastScan[s.id]||'--'}</td>
+      <td style="font-family:'Orbitron',monospace;color:var(--green);font-weight:700">${state.salaAlerts[s.id]||0}</td>
+      <td><a class="slink" href="${BASE_URL+s.id}" target="_blank">🔗 Abrir</a></td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// AI CHAT
+// ════════════════════════════════════════════
+
+const AI_SYS=`Você é especialista em eSoccer da Betano. Analisa padrões de jogadores e recommenda apostas. 
+Responda em português do Brasil, seja direto e use emojis. Sempre cite o nome do jogador para apostar.`;
+
+function aiKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI();}}
+function qa(q){document.getElementById('ai-inp').value=q;sendAI();}
+
+async function sendAI(){
+  const inp=document.getElementById('ai-inp');
+  const msg=inp.value.trim();
+  if(!msg) return;
+  inp.value='';
+  switchTab('ia');
+  appendMsg('u',msg);
+  const typ=appendTyping();
+  const btn=document.getElementById('ai-btn');
+  btn.disabled=true;
+
+  const ctx=buildCtx();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:AI_SYS,
+        messages:[{role:'user',content:ctx+'\n\nPergunta: '+msg}],
+      }),
+    });
+    const data=await res.json();
+    typ.remove();
+    const reply=data.content?.[0]?.text||'Sem resposta.';
+    appendMsg('a',reply);
+    log('IA respondeu.','ai');
+  }catch(e){
+    typ.remove();
+    appendMsg('a','❌ Erro na IA: '+e.message);
+  }
+  btn.disabled=false;
+}
+
+function buildCtx(){
+  const top=state.alerts.slice(0,15).map(a=>
+    `${a.timestamp} | ${a.partida} | ${a.horario} | Winner: ${a.winner}(${a.winnerPct}%) | Sala: ${a.salaNome}`
+  ).join('\n');
+  const ranking=Object.entries(PLAYERS_DB).sort((a,b)=>b[1]-a[1]).slice(0,10)
+    .map(([p,r])=>`${p}:${r}/10`).join(', ');
+  return `MONITOR STATUS:
+- Rodando: ${state.running?'SIM':'NÃO'} | Scans: ${state.scans} | Alertas: ${state.alertCount}
+- Jogadores ativos: ${[...state.active].join(', ')}
+- Ranking top players: ${ranking}
+
+ÚLTIMOS ALERTAS:
+${top||'Nenhum ainda'}`;
+}
+
+function appendMsg(role,text){
+  const c=document.getElementById('ai-msgs');
+  const d=document.createElement('div');
+  d.className='msg '+(role==='a'?'a':'u');
+  d.innerHTML=`<div class="mav">${role==='a'?'🤖':'👤'}</div><div class="mbub">${text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')}</div>`;
+  c.appendChild(d);c.scrollTop=c.scrollHeight;
+  return d;
+}
+
+function appendTyping(){
+  const c=document.getElementById('ai-msgs');
+  const d=document.createElement('div');
+  d.className='msg a';
+  d.innerHTML='<div class="mav">🤖</div><div class="typing"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>';
+  c.appendChild(d);c.scrollTop=c.scrollHeight;
+  return d;
+}
+
+// ════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════
+
+function switchTab(name){
+  const names=['alertas','salas','ia','log'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',names[i]===name));
+  document.querySelectorAll('.tab-body').forEach(t=>t.classList.remove('on'));
+  document.getElementById('tab-'+name).classList.add('on');
+}
+
+function setStatus(cls,txt){
+  const p=document.getElementById('status-pill');
+  const t=document.getElementById('status-txt');
+  p.className='status-pill '+cls;t.textContent=txt;
+}
+
+function renderCountdown(){
+  const el=document.getElementById('cdwn');
+  const bar=document.getElementById('prog');
+  if(state.running){
+    el.textContent=state.countdown;
+    bar.style.width=((state.interval-state.countdown)/state.interval*100)+'%';
+  }else{el.textContent='--';bar.style.width='0%';}
+}
+
+function updateStats(){
+  document.getElementById('st-alertas').textContent=state.alertCount;
+  document.getElementById('st-top').textContent=state.topCount;
+  document.getElementById('st-scans').textContent=state.scans;
+  document.getElementById('st-erros').textContent=state.errors;
+}
+
+function log(msg,type=''){
+  const a=document.getElementById('log-area');
+  const d=document.createElement('div');
+  d.className='ll '+type;
+  d.innerHTML='<span class="lt">['+now()+']</span> '+msg;
+  a.appendChild(d);a.scrollTop=a.scrollHeight;
+  while(a.children.length>300)a.removeChild(a.firstChild);
+}
+
+function toast(title,body,type){
+  const c=document.getElementById('toasts');
+  const t=document.createElement('div');
+  t.className='toast '+(type||'');
+  t.innerHTML='<div class="toast-t">'+title+'</div><div class="toast-b">'+body+'</div>';
+  c.appendChild(t);
+  setTimeout(()=>t.remove(),5000);
+}
+
+function exportCSV(){
+  if(!state.alerts.length){toast('Sem alertas','Inicie o monitor primeiro.','w');return;}
+  const rows=[['timestamp','partida','horario','winner','winnerPct','sala','salaNome','url']];
+  state.alerts.forEach(a=>rows.push([a.timestamp,a.partida,a.horario,a.winner,a.winnerPct+'%',a.sala,a.salaNome,a.url]));
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='esoccer_'+now().replace(/[/:,\s]/g,'-')+'.csv';
+  a.click();
+  log('CSV exportado.','s');
+}
+
+function clearAlerts(){
+  state.alerts=[];state.alertCount=0;state.topCount=0;state.seen.clear();
+  renderAlerts();updateStats();log('Alertas limpos.','w');
+}
+
+function now(){return new Date().toLocaleString('pt-BR');}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+init();
+</script>
+</body>
+</html>
